@@ -20,6 +20,8 @@ typedef enum {
     APP_WIFI_EVENT_PROV_TIMEOUT,
     /** Provisioning has restarted due to failures (Invalid SSID/Passphrase) */
     APP_WIFI_EVENT_PROV_RESTART,
+    /** Provisioning closed due to invalid credentials */
+    APP_WIFI_EVENT_PROV_CRED_MISMATCH,
 } app_wifi_event_t;
 
 /** Types of Proof of Possession */
@@ -29,7 +31,7 @@ typedef enum {
     /** Use random stream generated and stored in fctry partition during claiming process as PoP */
     POP_TYPE_RANDOM,
     /** Do not use any PoP.
-     * Use this option with caution. Consider using `CONFIG_APP_WIFI_PROV_TIMEOUT_PERIOD` with this.
+     * Use this option with caution. Consider using `CONFIG_APP_NETWORK_PROV_TIMEOUT_PERIOD` with this.
      */
     POP_TYPE_NONE
 } app_wifi_pop_type_t;

@@ -77,6 +77,38 @@ Prerequisites: ESP-IDF needs to be installed, and the code for ESP Rainmaker and
    idf.py build
    ```
 
+
+## Local Build (Espressif IDE v5.5.5 environment)
+
+This repo can also be built as a standalone project. It needs three paths, all of which
+are already configured in `.vscode/settings.json`:
+
+- `IDF_PATH` - ESP-IDF v5.5.5 (e.g. `D:\ESP32\v5.5.5\esp-idf`)
+- `HOMEKIT_PATH` - esp-homekit-sdk repo (e.g. `D:\ESP32\esp-homekit-sdk`)
+- `RMAKER_PATH` - esp-rainmaker repo (e.g. `D:\ESP32\rainmaker`, v1.16.0)
+
+On Windows, simply run the helper script (it activates the Espressif IDE environment
+and sets the component paths automatically):
+
+```powershell
+.\build.ps1            # build only
+.\build.ps1 -flash      # build + flash to COM3
+.\build.ps1 -monitor    # open serial monitor on COM3
+.\build.ps1 -clean      # full clean + rebuild
+```
+
+Or manually:
+
+```powershell
+. 'C:\Espressif\tools\Microsoft.v5.5.5.PowerShell_profile.ps1'
+$env:HOMEKIT_PATH = 'D:\ESP32\esp-homekit-sdk'
+$env:RMAKER_PATH  = 'D:\ESP32\rainmaker'
+idf.py build
+```
+
+The firmware is generated at `build/esp_smart_light_controller.bin` (target `esp32c3`,
+4 MB flash, dual OTA partitions).
+
 ## Additional Links:
 
 Hardware Open Source Links:

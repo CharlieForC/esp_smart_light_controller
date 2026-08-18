@@ -27,6 +27,15 @@ static const char *TAG = "app_homekit";
 
 static hap_char_t *on_char;
 
+#ifdef CONFIG_EXAMPLE_USE_HARDCODED_SETUP_CODE
+static esp_err_t qrcode_display(const char *text)
+{
+#define MAX_QRCODE_VERSION 5
+    esp_qrcode_config_t cfg = ESP_QRCODE_CONFIG_DEFAULT();
+    cfg.max_qrcode_version = MAX_QRCODE_VERSION;
+    return esp_qrcode_generate(&cfg, text);
+}
+#endif
 static void app_homekit_show_qr(void)
 {
 #ifdef CONFIG_EXAMPLE_USE_HARDCODED_SETUP_CODE
@@ -49,15 +58,9 @@ static void app_homekit_event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data)
 {
     if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        if (hap_get_paired_controller_count() == 0) {
-            app_homekit_show_qr();
-        } else {
-            ESP_LOGI(TAG, "Accessory is already paired with a controller.");
-        }
+        app_homekit_show_qr();
     } else if (event_base == HAP_EVENT && event_id == HAP_EVENT_CTRL_UNPAIRED) {
-        if (hap_get_paired_controller_count() == 0) {
-            app_homekit_show_qr();
-        }
+        app_homekit_show_qr();
     }
 }
 /* Mandatory identify routine for the accessory.

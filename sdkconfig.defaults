@@ -39,3 +39,8 @@ CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
 
 # Change default log level to reduce binary size
 CONFIG_LOG_DEFAULT_LEVEL_WARN=y
+# China RainMaker deployment: self-claiming is NOT supported, use assisted claiming
+CONFIG_ESP_RMAKER_ENABLE_CHALLENGE_RESPONSE=n
+CONFIG_ESP_RMAKER_SELF_CLAIM=n
+CONFIG_ESP_RMAKER_ASSISTED_CLAIM=y
+CONFIG_ESP_RMAKER_MQTT_HOST="a2w2vjfj9582iq.ats.iot.cn-north-1.amazonaws.com.cn"

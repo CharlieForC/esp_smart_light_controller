@@ -32,8 +32,8 @@
 static const char *TAG = "app_main";
 esp_rmaker_device_t *switch_device;
 extern QueueHandle_t app_driver_evt_queue;
-extern int g_pwm_servo_up_level;
-extern int g_pwm_servo_down_level;
+extern int32_t g_pwm_servo_up_level;
+extern int32_t g_pwm_servo_down_level;
 #define RMAKER_DEF_LIMIT_UP_PARAM "Limit Up"
 #define RMAKER_DEF_LIMIT_DOWN_PARAM "Limit Down"
 

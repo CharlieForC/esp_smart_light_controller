@@ -7,9 +7,9 @@
 #define PWM_SERVO_IO                     (4) // Define the output GPIO
 #define PWM_SERVO_LEDC_CHANNEL           LEDC_CHANNEL_0
 #define PWM_SERVO_LEDC_DUTY_RES          LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
-#define PWM_SERVO_LEDC_FREQUENCY         (100) // Frequency in Hertz. Set frequency at 100 Hz
-#define PWM_SERVO_LEDC_DUTY_MIN          (410)  //0.5ms
-#define PWM_SERVO_LEDC_DUTY_MAX          (2047) //2.5ms
+#define PWM_SERVO_LEDC_FREQUENCY         (50) // Frequency in Hertz. Set frequency at 50 Hz
+#define PWM_SERVO_LEDC_DUTY_MIN          (205)  //0.5ms @50Hz
+#define PWM_SERVO_LEDC_DUTY_MAX          (1024) //2.5ms @50Hz
 void pwm_servo_init(void)
 {
     // Prepare and then apply the LEDC PWM timer configuration

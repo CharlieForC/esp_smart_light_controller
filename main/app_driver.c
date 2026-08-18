@@ -11,9 +11,9 @@
 
 #include <iot_button.h>
 #include <esp_rmaker_core.h>
+#include <esp_rmaker_system_ctrl.h>
 #include <esp_rmaker_standard_params.h> 
 
-#include <app_reset.h>
 #include <ws2812_led.h>
 #include <esp_log.h>
 #include "app_priv.h"
@@ -28,7 +28,6 @@
 #include "esp_sleep.h"
 #include "driver/gpio.h"
 #include "esp_timer.h"
-#include <esp_rmaker_utils.h>
 #include "nvs_flash.h"
 #include "nvs.h"
 static const char *TAG = "app_driver";
@@ -47,10 +46,11 @@ static bool g_power_state = DEFAULT_POWER;
 #define SERVO_POWER_GPIO    6
 #define DEFAULT_PWM_SERVO_STATE false
 #define DEFAULT_SERVO_POWER_STATE false
-#define SERVO_EXECUTION_TIME 110    //ms
+#define SERVO_EXECUTION_TIME 500    //ms
+#define SERVO_RESET_POSITION    50      //90 deg (neutral position), 0..100 percent range
 static bool g_pwm_servo_state = DEFAULT_PWM_SERVO_STATE;
-int g_pwm_servo_up_level = DEFAULT_LIMIT_UP;
-int g_pwm_servo_down_level = DEFAULT_LIMIT_DOWN;
+int32_t g_pwm_servo_up_level = DEFAULT_LIMIT_UP;
+int32_t g_pwm_servo_down_level = DEFAULT_LIMIT_DOWN;
 
 static TaskHandle_t  servo_task_handle = NULL;
 
@@ -94,17 +94,17 @@ static void app_nvs_get_limit_value(void)
             printf("no value\n");
 
         } else {
-            printf("read up value %d\n",g_pwm_servo_up_level);
+            printf("read up value %d\n",(int)g_pwm_servo_up_level);
         }
         err = nvs_get_i32(nvs_handle, "down", &g_pwm_servo_down_level);
         if (err != ESP_OK) {
             printf("no value\n");
 
         } else {
-            printf("read down value %d\n",g_pwm_servo_down_level);
+            printf("read down value %d\n",(int)g_pwm_servo_down_level);
         }
 
-        // 关闭NVS
+        // ???NVS
         nvs_close(nvs_handle);
     }
 }
@@ -128,12 +128,12 @@ void app_nvs_set_limit_value(int up,int down)
             printf("Value set!\n");
         }
 
-        // 提交更改
+        // ??????
         err = nvs_commit(nvs_handle);
         if (err != ESP_OK) {
             printf("Error committing data!\n");
         }
-        // 关闭NVS
+        // ???NVS
         nvs_close(nvs_handle);
     }
 }
@@ -165,6 +165,9 @@ static void servo_task(void* pvParameters)
                 gpio_hold_en(SERVO_POWER_GPIO);
                 g_pwm_servo_state = app_driver_evt.event_value;
                 pwm_servo_set(g_pwm_servo_state == true? g_pwm_servo_up_level:g_pwm_servo_down_level);
+                vTaskDelay(SERVO_EXECUTION_TIME/portTICK_PERIOD_MS);
+                /* After the on/off action, reset the servo rotor to 90 deg (neutral), then cut motor power */
+                pwm_servo_set(SERVO_RESET_POSITION);
                 vTaskDelay(SERVO_EXECUTION_TIME/portTICK_PERIOD_MS);
                 gpio_hold_dis(SERVO_POWER_GPIO);
                 gpio_set_level(SERVO_POWER_GPIO, 0);
