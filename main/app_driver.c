@@ -60,6 +60,8 @@ static TaskHandle_t  servo_task_handle = NULL;
 
 #define BATTERY_WARNING_VLOT 3.6f   //V_bat = V_io / BATTERY_ATTEN
 #define BATTERY_SHUTDOWN_VLOT 3.4f   //V_bat = V_io / BATTERY_ATTEN
+static float g_battery_voltage = 4.0f;
+static adc_oneshot_unit_handle_t battery_adc_handle = NULL;
 
 static esp_timer_handle_t button1_timer = NULL;
 static gpio_int_type_t button1_intr_type = GPIO_INTR_HIGH_LEVEL;
@@ -239,32 +241,44 @@ static void set_power_state(bool target)
     gpio_set_level(OUTPUT_GPIO, target);
     app_indicator_set(target);
 }
+static void app_driver_read_battery_voltage(void)
+{
+    int adc_raw = 0;
+    if (battery_adc_handle) {
+        if (adc_oneshot_read(battery_adc_handle, BATTERY_ADC_CHANNEL, &adc_raw) == ESP_OK) {
+            g_battery_voltage = adc_raw * 3.0f / 4095 / BATTERY_ATTEN;
+        }
+    }
+}
+void app_driver_report_battery(void)
+{
+    esp_rmaker_param_update_and_report(
+        esp_rmaker_device_get_param_by_name(switch_device, RMAKER_DEF_BATTERY_VOLTAGE_PARAM),
+        esp_rmaker_int((int)(g_battery_voltage * 100)));
+    printf("Battery voltage: %.2f V\n", g_battery_voltage);
+}
 static void battery_monitor_task(void* pvParameters)
 {
-
-    adc_oneshot_unit_handle_t adc1_handle;
     adc_oneshot_unit_init_cfg_t init_config1 = {
         .unit_id = ADC_UNIT_1,
     };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &battery_adc_handle));
     //-------------ADC1 Config---------------//
     adc_oneshot_chan_cfg_t config = {
         .bitwidth = ADC_BITWIDTH_DEFAULT,
         .atten = BATTERY_ADC_ATTEN,
     };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, BATTERY_ADC_CHANNEL, &config));
-    int adc_raw;
-    float battery_voltage;
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(battery_adc_handle, BATTERY_ADC_CHANNEL, &config));
+    /* First report after ~30s so the RainMaker node is online */
+    vTaskDelay(30*1000/portTICK_PERIOD_MS);
     while(1){
-        vTaskDelay(10*60*1000/portTICK_PERIOD_MS);
-        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, BATTERY_ADC_CHANNEL, &adc_raw));
-        battery_voltage = adc_raw * 3.0f / 4095 / BATTERY_ATTEN;
-        //printf("Battery Voltage %f\r\n",battery_voltage);
-        if(battery_voltage < BATTERY_SHUTDOWN_VLOT ){
+        app_driver_read_battery_voltage();
+        app_driver_report_battery();
+        if(g_battery_voltage < BATTERY_SHUTDOWN_VLOT ){
             gpio_hold_dis(BOARD_POWER_IO);
             gpio_set_level(BOARD_POWER_IO, 0);
         }
-        else if(battery_voltage < BATTERY_WARNING_VLOT){
+        else if(g_battery_voltage < BATTERY_WARNING_VLOT){
             gpio_set_level(BOARD_LED_IO, 1);
             gpio_hold_en(BOARD_LED_IO);
             vTaskDelay(3000/portTICK_PERIOD_MS);
@@ -275,6 +289,7 @@ static void battery_monitor_task(void* pvParameters)
             gpio_set_level(BOARD_POWER_IO, 1);
             gpio_hold_en(BOARD_POWER_IO);
         }
+        vTaskDelay(5*60*1000/portTICK_PERIOD_MS);
     }
 }
 static void app_driver_button_long_press_callback(void* arg)
@@ -377,7 +392,7 @@ void app_driver_init()
     gpio_set_level(BOARD_LED_IO, 1);
     app_indicator_init();
     app_servo_init();
-    xTaskCreate(battery_monitor_task, "battery_monitor_task", 2048, NULL, 12, NULL);
+    xTaskCreate(battery_monitor_task, "battery_monitor_task", 4096, NULL, 12, NULL);
 
 }
 

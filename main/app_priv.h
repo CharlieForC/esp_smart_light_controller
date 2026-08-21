@@ -21,11 +21,13 @@ typedef struct {
     int event_value;
 }app_driver_evt_t;
 #define DEFAULT_LIMIT_UP  65
+#define RMAKER_DEF_BATTERY_VOLTAGE_PARAM "Battery Voltage"
 #define DEFAULT_LIMIT_DOWN 35
 extern esp_rmaker_device_t *switch_device;
 void app_indicator_set(bool state);
 void app_driver_init(void);
 int app_driver_set_state(bool state);
+void app_driver_report_battery(void);
 bool app_driver_get_state(void);
 esp_err_t app_homekit_start(bool init_state);
 esp_err_t app_homekit_update_state(bool state);
